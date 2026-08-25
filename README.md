@@ -21,7 +21,7 @@ Supabase Edge Functions
         |
         +--> GitHub API
         |
-        +--> AI Gateway
+        +--> Lovable AI Gateway
 ```
 
 ## Project Structure
@@ -75,7 +75,49 @@ Start the development server:
 npm run dev
 ```
 
-The UI can load without Supabase credentials, but repository analysis, snippet explanation, and developer-mode AI requests require a configured Supabase project and deployed Edge Functions.
+## Backend Setup
+
+RepoXray's AI features are implemented as Supabase Edge Functions. The frontend alone can render the interface, but the following functions must be deployed to the same Supabase project used in `.env`:
+
+- `analyze-repo`
+- `chat-repo`
+- `explain-snippet`
+- `developer-mode`
+
+From the repository root, authenticate and link the project:
+
+```bash
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+```
+
+Set the server-side secrets. These must **not** be added to the Vite `.env` file:
+
+```bash
+npx supabase secrets set LOVABLE_API_KEY=YOUR_LOVABLE_API_KEY
+npx supabase secrets set GITHUB_TOKEN=YOUR_GITHUB_TOKEN
+```
+
+`GITHUB_TOKEN` is optional but recommended because repository analysis can make multiple GitHub API requests and unauthenticated requests are rate-limited.
+
+Deploy the functions:
+
+```bash
+npx supabase functions deploy analyze-repo --no-verify-jwt
+npx supabase functions deploy chat-repo --no-verify-jwt
+npx supabase functions deploy explain-snippet --no-verify-jwt
+npx supabase functions deploy developer-mode --no-verify-jwt
+```
+
+After deployment, restart Vite:
+
+```bash
+npm run dev
+```
+
+### Important: why the UI can load while Explain fails
+
+The React application and the AI backend are separate systems. A successful `npm run dev` only proves that the frontend builds. Clicking **Explain** sends a request to the `analyze-repo` Edge Function, which in turn calls GitHub and the Lovable AI Gateway. If the Supabase project, Edge Function deployment, or `LOVABLE_API_KEY` is missing, the frontend cannot complete the analysis.
 
 ## Quality Checks
 
@@ -96,6 +138,7 @@ npm test
 - TanStack Query
 - Supabase Edge Functions
 - GitHub API
+- Lovable AI Gateway
 
 ## Use Cases
 

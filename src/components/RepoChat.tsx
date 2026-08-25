@@ -6,6 +6,7 @@ import { Markdown } from "@/components/Markdown";
 import type { AnalysisResult } from "@/types/analysis";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { isSupabaseConfigured } from "@/integrations/supabase/client";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
@@ -38,12 +39,21 @@ export function RepoChat({ result }: { result: AnalysisResult }) {
   const send = async () => {
     const text = input.trim();
     if (!text || loading) return;
+    if (!isSupabaseConfigured) {
+      toast.error("Supabase is not configured. Add the VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY values first.");
+      return;
+    }
+
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (!baseUrl || !key) return;
+
     setInput("");
     const userMsg: Msg = { role: "user", content: text };
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-repo`;
+    const CHAT_URL = `${baseUrl.replace(/\/$/, "")}/functions/v1/chat-repo`;
     let assistantSoFar = "";
     const upsert = (chunk: string) => {
       assistantSoFar += chunk;
@@ -59,48 +69,47 @@ export function RepoChat({ result }: { result: AnalysisResult }) {
     try {
       const resp = await fetch(CHAT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          context: buildContext(result),
-          messages: [...messages, userMsg],
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ context: buildContext(result), messages: [...messages, userMsg] }),
       });
-      if (resp.status === 429) { toast.error("Rate limit — try again shortly."); setLoading(false); return; }
-      if (resp.status === 402) { toast.error("AI credits exhausted. Add credits in Lovable Cloud settings."); setLoading(false); return; }
-      if (!resp.ok || !resp.body) throw new Error("Failed to start chat stream");
+
+      if (resp.status === 429) throw new Error("Rate limit reached. Please try again shortly.");
+      if (resp.status === 402) throw new Error("AI credits are currently unavailable for this project.");
+      if (!resp.ok || !resp.body) {
+        const detail = await resp.text().catch(() => "");
+        throw new Error(detail || "Failed to start the chat stream.");
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       let done = false;
       while (!done) {
-        const { done: d, value } = await reader.read();
-        if (d) break;
+        const { done: streamDone, value } = await reader.read();
+        if (streamDone) break;
         buffer += decoder.decode(value, { stream: true });
-        let idx: number;
-        while ((idx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, idx);
-          buffer = buffer.slice(idx + 1);
+        let index: number;
+        while ((index = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, index);
+          buffer = buffer.slice(index + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
           if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") { done = true; break; }
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") { done = true; break; }
           try {
-            const p = JSON.parse(json);
-            const c = p.choices?.[0]?.delta?.content as string | undefined;
-            if (c) upsert(c);
+            const parsed = JSON.parse(payload);
+            const chunk = parsed.choices?.[0]?.delta?.content;
+            if (typeof chunk === "string" && chunk) upsert(chunk);
           } catch {
-            buffer = line + "\n" + buffer;
-            break;
+            // Ignore malformed/non-content SSE messages instead of corrupting the stream buffer.
           }
         }
       }
-    } catch (e) {
-      console.error(e);
-      toast.error("Chat failed. Please try again.");
+      if (!assistantSoFar) throw new Error("The assistant returned an empty response.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Chat failed. Please try again.";
+      if (!assistantSoFar) setMessages((prev) => prev.filter((m, index) => !(index === prev.length - 1 && m.role === "assistant")));
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -113,65 +122,30 @@ export function RepoChat({ result }: { result: AnalysisResult }) {
         <div className="font-serif-display text-base">Ask the repo</div>
         <div className="ml-auto text-xs text-muted-foreground">Your AI tutor</div>
       </div>
-
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-5">
         {messages.length === 0 && (
           <div className="mx-auto max-w-md space-y-3 py-8 text-center text-sm text-muted-foreground">
             <p>Ask any question about this codebase.</p>
             <div className="grid gap-2">
-              {[
-                "Where should I start reading?",
-                "Explain the main entry point like I'm new.",
-                "How does data flow through this app?",
-              ].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => setInput(q)}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-left text-foreground/80 hover:bg-accent/60"
-                >
-                  {q}
-                </button>
+              {["Where should I start reading?", "Explain the main entry point like I'm new.", "How does data flow through this app?"].map((q) => (
+                <button key={q} onClick={() => setInput(q)} className="rounded-lg border border-border bg-background px-3 py-2 text-left text-foreground/80 hover:bg-accent/60">{q}</button>
               ))}
             </div>
           </div>
         )}
-
         {messages.map((m, i) => (
-          <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-            <div
-              className={cn(
-                "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-soft",
-                m.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background border border-border",
-              )}
-            >
+          <div key={`${m.role}-${i}`} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+            <div className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-soft", m.role === "user" ? "bg-primary text-primary-foreground" : "border border-border bg-background")}>
               {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
             </div>
           </div>
         ))}
-
-        {loading && messages[messages.length - 1]?.role !== "assistant" && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
-          </div>
-        )}
+        {loading && messages[messages.length - 1]?.role !== "assistant" && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…</div>}
       </div>
-
       <div className="border-t border-border p-3">
         <div className="flex items-end gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-            }}
-            placeholder="Ask a question about this repo…"
-            className="min-h-[44px] max-h-40 resize-none"
-          />
-          <Button onClick={send} disabled={loading || !input.trim()} size="icon" className="h-11 w-11 shrink-0">
-            <Send className="h-4 w-4" />
-          </Button>
+          <Textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }} placeholder="Ask a question about this repo…" className="min-h-[44px] max-h-40 resize-none" />
+          <Button onClick={() => void send()} disabled={loading || !input.trim()} size="icon" className="h-11 w-11 shrink-0"><Send className="h-4 w-4" /></Button>
         </div>
       </div>
     </div>

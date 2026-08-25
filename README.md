@@ -1,247 +1,109 @@
-#  RepoXray
+# RepoXray
 
-> **X-Ray Repositories, Don’t Just Read Them.**
+> **X-Ray repositories. Understand the codebase, not just the files.**
 
----
+RepoXray is an AI-assisted developer tool for exploring GitHub repositories, understanding code snippets, and generating structured developer insights.
 
-##  Overview
+## Features
 
-**RepoXray** is an AI-powered developer tool that helps you **understand any GitHub repository like a senior developer**.
+- **Repository Analysis** — Paste a GitHub repository and receive a structured overview, important-file explanations, technology summary, and guided reading path.
+- **Snippet Explain** — Paste code and get a plain-English explanation.
+- **Developer Mode** — Analyze a GitHub profile or repository, generate improvement suggestions, README ideas, and discoverability recommendations.
+- **Interactive UI** — React, TypeScript, Tailwind CSS, Radix UI, and theme support.
 
-Paste a repo → get:
+## Architecture
 
-*  Structured explanation
-*  File-wise breakdown
-*  Smart insights
-*  Guided learning path
-
----
-
-##  Preview
-
-###  Home
-
-![Home Preview](preview/home.png)
-
----
-
-###  Snippet Mode
-
-![Snippet Preview](preview/snippet.png)
-
----
-
-### 🧑‍💻 Developer Mode
-
-![Developer Preview](preview/developer.png)
-
----
-
-##  Features
-
-*  Repository Analysis
-*  Guided Structure
-*  Friendly Overview
-*  Start-Here Path
-*  Developer Mode
-
-  * Profile Analyzer
-  * Repo Score
-  * README Generator
-  * SEO Optimizer
-*  DevSecOps Insights (Upcoming)
-
----
-
-##  Project Structure
-
+```text
+Browser (React + Vite)
+        |
+        v
+Supabase Edge Functions
+        |
+        +--> GitHub API
+        |
+        +--> AI Gateway
 ```
+
+## Project Structure
+
+```text
 RepoXray/
-│
-├── public/
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── hooks/
-│   ├── integrations/
-│   ├── lib/
-│   ├── pages/
-│   ├── store/
-│   ├── test/
-│   ├── types/
-│   ├── App.tsx
-│   ├── main.tsx
-│
-├── supabase/
-├── .env
+│   ├── components/       # UI and reusable components
+│   ├── integrations/     # Supabase client
+│   ├── pages/            # Application routes
+│   ├── store/            # Client-side analysis state
+│   └── types/            # TypeScript types
+├── supabase/functions/   # Edge-function back end
+├── .env.example
 ├── package.json
 └── vite.config.ts
 ```
 
----
+## Getting Started
 
-##  How It Works
-
-
-
-```mermaid
-graph TD
-    User[Developer / Learner] -->|Paste Repository URL| UI[RepoXray Web Interface]
-
-    UI --> Analyze[Repository Analysis Engine]
-
-    Analyze --> GitHub[GitHub Repository Fetcher]
-    GitHub --> Structure[Repository Structure Parser]
-
-    Structure --> Overview[Project Overview Generator]
-    Structure --> Files[File & Folder Analyzer]
-    Structure --> Entry[Start-Here Path Generator]
-
-    Overview --> LLM[AI Analysis Engine]
-    Files --> LLM
-    Entry --> LLM
-
-    LLM --> Dashboard[Interactive Results Dashboard]
-
-    Dashboard --> Summary[Repository Summary]
-    Dashboard --> Tree[Guided Structure]
-    Dashboard --> Insights[Important Files]
-    Dashboard --> Learning[Learning Path]
-
-    User --> DevMode[Developer Mode]
-
-    DevMode --> Profile[GitHub Profile Analyzer]
-    DevMode --> Score[Repository Score Engine]
-    DevMode --> Readme[README Generator]
-    DevMode --> SEO[GitHub SEO Optimizer]
-
-    Profile --> Recommendations[Improvement Suggestions]
-    Score --> Recommendations
-    Readme --> Recommendations
-    SEO --> Recommendations
-```
-
-
----
-
-##  Internal Flow
-
-```mermaid
-graph TD
-    User[User]
-
-    User --> Engine[RepoXray]
-
-    Engine --> Repo[Repository]
-    Repo --> Overview[Overview]
-    Repo --> Files[Files]
-    Repo --> Path[Learning Path]
-
-    Engine --> Snippet[Snippet]
-    Snippet --> Explain[Explain]
-    Snippet --> Review[Review]
-
-    Engine --> Dev[Developer]
-    Dev --> Profile[Profile]
-    Dev --> Score[Score]
-    Dev --> Readme[README]
-    Dev --> SEO[SEO]
-```
-
----
-
-##  UI Flow
-
-```mermaid
-graph TD
-    Home[RepoXray Home]
-
-    Home --> Analyze[Analyze Repository]
-
-    Analyze --> Dashboard[Interactive Dashboard]
-
-    Dashboard --> Overview[Project Overview]
-    Dashboard --> Structure[Structure Explorer]
-    Dashboard --> Insights[File Insights]
-    Dashboard --> Path[Learning Path]
-```
-
----
-
-##  Developer Mode
-
-```mermaid
-graph TD
-    Dev[Developer Mode]
-
-    Dev --> Profile[Profile Intelligence]
-    Dev --> Score[Repository Health Score]
-    Dev --> Readme[README Generator]
-    Dev --> SEO[SEO Optimizer]
-    Dev --> Insights[Actionable Insights]
-```
----
-
-##  Getting Started
+Clone your copy of the repository:
 
 ```bash
-git clone https://github.com/KrrishSR4/RepoXray.git
+git clone https://github.com/Sujith-2193/RepoXray.git
 cd RepoXray
 npm install
+```
+
+Copy the environment template:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then add your Supabase project values to `.env`:
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-anon-or-publishable-key
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
----
+The UI can load without Supabase credentials, but repository analysis, snippet explanation, and developer-mode AI requests require a configured Supabase project and deployed Edge Functions.
 
-##  Use Cases
+## Quality Checks
 
-*  Students learning open-source
-*  Developers exploring repos
-*  Teams reviewing projects
-*  Beginners understanding codebases
+```bash
+npm run build
+npm run lint
+npm test
+```
 
----
+## Tech Stack
 
-##  Future Enhancements
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS 3
+- Radix UI
+- Zustand
+- TanStack Query
+- Supabase Edge Functions
+- GitHub API
 
-*  DevSecOps Security Scanner
-*  Repo Health Score
-*  CI/CD Detection
-*  AI Code Reviewer
+## Use Cases
 
----
+- Students learning unfamiliar repositories
+- Developers onboarding to a new codebase
+- Portfolio and repository review
+- Understanding isolated code snippets
 
-##  RepoXray Philosophy
-
-> “Don’t just read code. Understand it.”
-
----
-
-##  SEO Keywords
-
-github repo analyzer
-ai code explainer
-understand codebase tool
-developer productivity tool
-github repository insights
-learn coding faster
-repo structure analyzer
-
----
-
-##  Contributing
-
-Pull requests are welcome.
-Open an issue for suggestions or improvements.
-
----
-
-##  Support
-
-If you like this project, give it a ⭐ on GitHub!
-
----
-
-##  RepoXray
+## RepoXray
 
 > **X-Ray. Refine. Repeat.**

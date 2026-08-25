@@ -1,4 +1,6 @@
-project_id = "itcmxtizkcjyrwrurztz"
+# Link this repository to your own Supabase project before deploying:
+# npx supabase link --project-ref YOUR_PROJECT_REF
+# The Supabase CLI will manage the project reference for your local setup.
 
 [functions.analyze-repo]
 verify_jwt = false

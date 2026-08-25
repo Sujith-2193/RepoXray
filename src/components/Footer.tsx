@@ -1,51 +1,43 @@
-import { Github } from 'lucide-react';
-import { useTheme } from 'next-themes';
-
 export function Footer() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   return (
     <footer className="border-t border-[#1da828] bg-[#9deda3] backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-4">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex items-center gap-2 text-sm text-black">
-            <span>Made with ❤️ by</span>
+            <span>Built and developed by</span>
             <a
-              href="https://github.com/KrrishSR4"
+              href="https://github.com/Sujith-2193"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-black hover:text-[#1da828] transition-colors"
+              className="font-medium text-black transition-colors hover:text-[#1da828]"
             >
-              Krish Mishra
+              Arun Sujith
             </a>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <a
-              href="https://github.com/KrrishSR4"
+              href="https://github.com/Sujith-2193"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-lg border border-[#2E8B57] bg-[#2E8B57] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#9deda3] hover:text-[#2E8B57] transition-all hover:shadow-md"
+              className="flex items-center gap-2 rounded-lg border border-[#2E8B57] bg-[#2E8B57] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#9deda3] hover:text-[#2E8B57] hover:shadow-md"
             >
-              <Github className="h-4 w-4" />
-              github.com/KrrishSR4
+              <span className="text-base" aria-hidden="true">⌘</span>
+              github.com/Sujith-2193
             </a>
 
             <a
-              href="https://github.com/KrrishSR4/RepoXray"
+              href="https://github.com/Sujith-2193/RepoXray"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-lg border border-[#2E8B57] bg-[#2E8B57] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#9deda3] hover:text-[#2E8B57] transition-all hover:shadow-md"
+              className="flex items-center gap-2 rounded-lg border border-[#2E8B57] bg-[#2E8B57] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#9deda3] hover:text-[#2E8B57] hover:shadow-md"
             >
-              <Github className="h-4 w-4" />
+              <span className="text-base" aria-hidden="true">⌘</span>
               RepoXray
             </a>
           </div>
 
-          <p className="text-xs text-black">
-            © 2026 RepoXray. No rights reserved.
-          </p>
+          <p className="text-xs text-black">© 2026 RepoXray.</p>
         </div>
       </div>
     </footer>
